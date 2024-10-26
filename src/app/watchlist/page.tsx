@@ -1,34 +1,41 @@
-// src/app/watchlist/page.tsx
-"use client"; // Make this component a Client Component
+"use client";
 
 import React from 'react';
 import { useWatchlist } from '../context/WatchlistContext';
 import { Movie } from '@/types';
+import Image from 'next/image';
 
 const Watchlist: React.FC = () => {
   const { watchlist, removeFromWatchlist } = useWatchlist();
 
   return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold">My Watchlist</h1>
+    <div className="p-4 text-center">
+      <h1 className="text-2xl sm:text-3xl mb-4 font-bold">My Watchlist</h1>
       {watchlist.length === 0 ? (
         <p>Your watchlist is empty.</p>
       ) : (
-        <ul>
+        <ul className="flex flex-col items-center sm:items-start sm:flex-row sm:flex-wrap justify-center gap-4">
           {watchlist.map((movie: Movie) => (
-            <li key={movie.id} className="flex items-center mb-4">
-              <img
-                src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+            <li
+              key={movie.id}
+              className="flex flex-col sm:flex-row items-center mb-4 p-4 w-full sm:w-[48%] md:w-[30%] lg:w-[22%] border rounded shadow"
+            >
+              <Image
+                src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
                 alt={movie.title}
-                className="w-16 h-24 mr-2"
+                 width={80}
+                className="object-cover"
+                height={100}
+
               />
-              <div>
-                <h2 className="text-xl">{movie.title}</h2>
+
+              <div className="text-center sm:text-left">
+                <h2 className="mt-2 text-[14px] font-semibold sm:text-sm p-1 sm:p-2">{movie.title}</h2>
                 <button
                   onClick={() => removeFromWatchlist(movie.id)}
-                  className="mt-2 p-1 bg-red-500 text-white rounded"
+                  className="mt-2 text-[14px] font-semibold sm:text-sm p-1 sm:p-2 text-red-600"
                 >
-                  Remove from Watchlist
+                  Remove Watchlist
                 </button>
               </div>
             </li>

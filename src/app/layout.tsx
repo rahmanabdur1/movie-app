@@ -3,7 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { WatchlistProvider } from "./context/WatchlistContext";
 import Navbar from "./components/Navbar";
-import { DarkModeProvider } from "./context/DarkModeContext";
+
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -31,12 +31,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-           <DarkModeProvider>
+       
         <WatchlistProvider>
         <Navbar />
         {children}
         </WatchlistProvider>
-        </DarkModeProvider>
+   
       </body>
     </html>
   );

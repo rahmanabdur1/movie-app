@@ -1,17 +1,13 @@
-// src/app/movies/[id]/page.tsx
+"use client";
 
-"use client";  // Add this directive to enable client component functionality
-
+import Recommendations from '@/app/components/Recommendations';
 import { CreditsSchema, MovieSchema, RecommendationsSchema } from '@/app/schemas';
-import Link from 'next/link';
+import Image from 'next/image';
 import React from 'react';
 import { z } from 'zod';
+import { useWatchlist } from '@/app/context/WatchlistContext';
 
-interface MovieDetailsProps {
-  params: {
-    id: string;
-  };
-}
+
 
 const fetchMovieDetails = async (id: string) => {
   const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
@@ -31,16 +27,21 @@ const fetchRecommendations = async (id: string) => {
   return RecommendationsSchema.parse(data);
 };
 
-const MovieDetails: React.FC<MovieDetailsProps> = ({ params }) => {
-  const { id } = params;
+export default function MovieDetails({ params }: { params: Promise<{ id: string }> }) {
+  const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
   const [error, setError] = React.useState<string | null>(null);
   const [movie, setMovie] = React.useState<any>(null);
   const [credits, setCredits] = React.useState<any>(null);
   const [recommendations, setRecommendations] = React.useState<any>(null);
+  const [loadingRecommendations, setLoadingRecommendations] = React.useState(true); // Loading state for recommendations
+
+  const [isInWatchlist, setIsInWatchlist] = React.useState(false);
 
   React.useEffect(() => {
     const fetchDetails = async () => {
       try {
+        const { id } = await params;
+
         const movieData = await fetchMovieDetails(id);
         setMovie(movieData);
 
@@ -49,6 +50,10 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ params }) => {
 
         const recommendationsData = await fetchRecommendations(id);
         setRecommendations(recommendationsData);
+        setLoadingRecommendations(false); // Set loading to false after fetching recommendations
+
+        // Check if the movie is in the watchlist
+        setIsInWatchlist(watchlist.some((item) => item.id === movieData.id));
       } catch (err) {
         if (err instanceof z.ZodError) {
           setError('Failed to validate movie data. Please try again later.');
@@ -59,38 +64,67 @@ const MovieDetails: React.FC<MovieDetailsProps> = ({ params }) => {
     };
 
     fetchDetails();
-  }, [id]);
+  }, [params, watchlist]);
+
+  const handleWatchlistToggle = () => {
+    if (isInWatchlist) {
+      removeFromWatchlist(movie.id);
+      setIsInWatchlist(false);
+    } else {
+      addToWatchlist(movie);
+      setIsInWatchlist(true);
+    }
+  };
 
   if (error) return <div className="p-4 text-red-500">{error}</div>;
-  if (!movie || !credits || !recommendations) return <p>Loading...</p>;
+  if (!movie || !credits) return (
+    <p className="mt-2 text-center text-[13px] font-medium text-white text-shadow-custom"
+      style={{ fontFamily: 'var(--font-geist-mono), monospace, sans-serif' }}>Loading...</p>
+  );
 
   return (
     <div className="p-4">
-      <h1 className="text-3xl font-bold">{movie.title}</h1>
-      <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={movie.title} />
-      <p className="mt-2">{movie.overview}</p>
-      <p><strong>Release Date:</strong> {movie.release_date}</p>
-      <p><strong>Genres:</strong> {movie.genres.map((genre: { name: string }) => genre.name).join(', ')}</p>
+      <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between max-w-[1000px] mx-auto p-4 gap-4">
+        <Image
+          src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+          width={200}
+          height={300}
+          alt={movie.title}
+          className="object-cover rounded shadow-md sm:w-[200px]"
+        />
+        <div className="flex flex-col gap-2 sm:ml-4 text-center sm:text-left max-w-full sm:max-w-[500px]">
+          <h1 className="text-2xl sm:text-3xl font-bold">{movie.title}</h1>
+          <p className="mt-2">{movie.overview}</p>
+          <p className="mt-2">
+            <strong>Release Date:</strong> {movie.release_date}
+          </p>
+          <p><strong>Genres:</strong> {movie.genres.map((genre: { name: string }) => genre.name).join(', ')}</p>
+          <button
+            onClick={handleWatchlistToggle}
+            className={`mt-2 px-4 py-2 rounded transition duration-300 
+              ${isInWatchlist ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-700 hover:bg-black'} 
+              text-white shadow-md`}
+          >
+            {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+          </button>
+        </div>
+      </div>
 
-      <h2 className="mt-4 text-2xl">Cast</h2>
-      <ul>
+      <h2 className="mt-4 mb-2 text-2xl">Cast</h2>
+      <ul className='mb-4'>
         {credits.cast.slice(0, 5).map((actor: { name: string }) => (
           <li key={actor.name}>{actor.name}</li>
         ))}
       </ul>
 
       <h2 className="mt-4 text-2xl">Recommendations</h2>
-      <div>
-        {recommendations.results.map((rec: { id: number; title: string; poster_path: string }) => (
-             <Link className="flex items-center mt-2" href={`/movie/${rec.id}`}>
-     
-            <img src={`https://image.tmdb.org/t/p/w500${rec.poster_path}`} alt={rec.title} className="w-16 h-24 mr-2" />
-            <span>{rec.title}</span>
-          </Link>
-        ))}
-      </div>
+      {loadingRecommendations ? ( // Loading state for recommendations
+        <p className="mt-2 text-center text-[13px] font-medium text-white text-shadow-custom">
+          Loading recommendations...
+        </p>
+      ) : (
+        <Recommendations recommendations={recommendations} />
+      )}
     </div>
   );
-};
-
-export default MovieDetails;
+}

@@ -16,7 +16,7 @@ export default function MovieList() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(''); // Local state for search query
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<SearchForm>({
     resolver: zodResolver(searchSchema),
@@ -40,10 +40,10 @@ export default function MovieList() {
   };
 
   const handleSearch = (data: SearchForm) => {
-    setSearchQuery(data.query); // Update the search query
-    reset(); // Reset the form
-    setMovies([]); // Clear previous movies
-    setPage(1); // Reset to page 1 for a new search
+    setSearchQuery(data.query);
+    reset();
+    setMovies([]);
+    setPage(1);
   };
 
   const handleLoadMore = () => {
@@ -52,18 +52,19 @@ export default function MovieList() {
 
   return (
     <div className="p-4">
-      <h1 className="text-4xl font-bold mb-4">Movie List</h1>
+      <h1 className="text-4xl font-bold mb-4 text-center">Movie List</h1>
 
-      <form onSubmit={handleSubmit(handleSearch)} className="mb-4">
+      <form onSubmit={handleSubmit(handleSearch)} className="mb-4 flex justify-center">
         <input
           {...register('query')}
           type="text"
           placeholder="Search for a movie..."
-          className="border rounded p-2 mr-2"
-          defaultValue={searchQuery} // Use local searchQuery
+          className="border border-blue-500 outline-none rounded-xl p-2 mr-2 focus:border-blue-700 transition duration-200"
+          defaultValue={searchQuery}
         />
+
         {errors.query && <p className="text-red-500">{errors.query.message}</p>}
-        <button type="submit" className="bg-blue-500 text-white rounded px-4 py-2">
+        <button type="submit" className="bg-black text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition duration-300">
           Search
         </button>
       </form>
@@ -74,11 +75,11 @@ export default function MovieList() {
         ))}
       </div>
 
-      {isLoading && <p>Loading more movies...</p>}
+      {isLoading && <p className="text-center">Loading more movies...</p>}
 
       <button
         onClick={handleLoadMore}
-        className="mt-4 bg-green-500 text-white rounded px-4 py-2"
+        className="mt-4 bg-green-600  text-white rounded px-4 py-2 hover:bg-green-700 transition duration-300"
         disabled={isLoading}
       >
         Load More
