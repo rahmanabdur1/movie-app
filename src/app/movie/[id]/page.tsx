@@ -1,15 +1,13 @@
-"use client";
-
+"use client"
 import Recommendations from '@/app/components/Recommendations';
 import { CreditsSchema, MovieSchema, RecommendationsSchema } from '@/app/schemas';
 import Image from 'next/image';
 import React from 'react';
 import { z } from 'zod';
+import { Movie, Recommendations as RecommendationsType } from '@/types';
 import { useWatchlist } from '@/app/context/WatchlistContext';
 
-
-
-const fetchMovieDetails = async (id: string) => {
+const fetchMovieDetails = async (id: string): Promise<Movie> => {
   const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
   const data = await res.json();
   return MovieSchema.parse(data);
@@ -21,7 +19,7 @@ const fetchCredits = async (id: string) => {
   return CreditsSchema.parse(data);
 };
 
-const fetchRecommendations = async (id: string) => {
+const fetchRecommendations = async (id: string): Promise<RecommendationsType> => {
   const res = await fetch(`https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
   const data = await res.json();
   return RecommendationsSchema.parse(data);
@@ -30,11 +28,10 @@ const fetchRecommendations = async (id: string) => {
 export default function MovieDetails({ params }: { params: Promise<{ id: string }> }) {
   const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
   const [error, setError] = React.useState<string | null>(null);
-  const [movie, setMovie] = React.useState<any>(null);
+  const [movie, setMovie] = React.useState<Movie | null>(null);
   const [credits, setCredits] = React.useState<any>(null);
-  const [recommendations, setRecommendations] = React.useState<any>(null);
-  const [loadingRecommendations, setLoadingRecommendations] = React.useState(true); // Loading state for recommendations
-
+  const [recommendations, setRecommendations] = React.useState<RecommendationsType | null>(null);
+  const [loadingRecommendations, setLoadingRecommendations] = React.useState(true);
   const [isInWatchlist, setIsInWatchlist] = React.useState(false);
 
   React.useEffect(() => {
@@ -50,9 +47,8 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
 
         const recommendationsData = await fetchRecommendations(id);
         setRecommendations(recommendationsData);
-        setLoadingRecommendations(false); // Set loading to false after fetching recommendations
+        setLoadingRecommendations(false);
 
-        // Check if the movie is in the watchlist
         setIsInWatchlist(watchlist.some((item) => item.id === movieData.id));
       } catch (err) {
         if (err instanceof z.ZodError) {
@@ -68,11 +64,13 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
 
   const handleWatchlistToggle = () => {
     if (isInWatchlist) {
-      removeFromWatchlist(movie.id);
+      removeFromWatchlist(movie?.id!);
       setIsInWatchlist(false);
     } else {
-      addToWatchlist(movie);
-      setIsInWatchlist(true);
+      if (movie) {
+        addToWatchlist(movie);
+        setIsInWatchlist(true);
+      }
     }
   };
 
@@ -81,6 +79,9 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
     <p className="mt-2 text-center text-[13px] font-medium text-white text-shadow-custom"
       style={{ fontFamily: 'var(--font-geist-mono), monospace, sans-serif' }}>Loading...</p>
   );
+
+  // Provide a fallback for recommendations
+  const recommendationsToPass = recommendations || { results: [] };
 
   return (
     <div className="p-4">
@@ -102,7 +103,7 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
           <button
             onClick={handleWatchlistToggle}
             className={`mt-2 px-4 py-2 rounded transition duration-300 
-              ${isInWatchlist ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-700 hover:bg-black'} 
+              ${isInWatchlist ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} 
               text-white shadow-md`}
           >
             {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
@@ -112,18 +113,19 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
 
       <h2 className="mt-4 mb-2 text-2xl">Cast</h2>
       <ul className='mb-4'>
-        {credits.cast.slice(0, 5).map((actor: { name: string }) => (
-          <li key={actor.name}>{actor.name}</li>
-        ))}
+      {credits.cast.slice(0, 5).map((actor: any, index: number) => (
+  <li key={actor.id || index}>{actor.name}</li>
+))}
+
       </ul>
 
       <h2 className="mt-4 text-2xl">Recommendations</h2>
-      {loadingRecommendations ? ( // Loading state for recommendations
+      {loadingRecommendations ? (
         <p className="mt-2 text-center text-[13px] font-medium text-white text-shadow-custom">
           Loading recommendations...
         </p>
       ) : (
-        <Recommendations recommendations={recommendations} />
+        <Recommendations recommendations={recommendationsToPass} />
       )}
     </div>
   );

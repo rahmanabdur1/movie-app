@@ -1,14 +1,18 @@
-import Image from 'next/image';
-import Link from 'next/link';
 import React from 'react';
+import { Movie } from '@/types';
+import Link from 'next/link';
+import Image from 'next/image';
 
-interface RecommendationProps {
-  recommendations: {
-    results: { id: number; title: string; poster_path: string }[];
-  };
+interface RecommendationsProps {
+  recommendations: { results: Movie[] } | null; // Allow null
 }
 
-const Recommendations: React.FC<RecommendationProps> = ({ recommendations }) => {
+const Recommendations: React.FC<RecommendationsProps> = ({ recommendations }) => {
+  // Handle the case when recommendations is null
+  if (!recommendations) {
+    return <p>No recommendations available.</p>; // Fallback message
+  }
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
       {recommendations.results.map((rec) => (
