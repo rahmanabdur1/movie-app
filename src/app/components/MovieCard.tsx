@@ -1,19 +1,37 @@
-// src/app/components/MovieCard.tsx
+// src/components/MovieCard.tsx
+
 import React from 'react';
-import { Movie } from '../context/WatchlistContext';
-import Link from 'next/link';
+import { useWatchlist } from '../context/WatchlistContext';
+import { Movie } from '@/types';
+import { useRouter } from 'next/navigation'; // Import the router hook
 
-interface MovieCardProps {
+type MovieCardProps = {
   movie: Movie;
-}
+};
 
-export default function MovieCard({ movie }: MovieCardProps) {
+const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
+  const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
+  const router = useRouter();
+  const isInWatchlist = watchlist.some((item) => item.id === movie.id);
+
+  const handleWatchlistToggle = () => {
+    if (isInWatchlist) {
+      removeFromWatchlist(movie.id);
+    } else {
+      addToWatchlist(movie);
+      router.push('/watchlist'); // Navigate to watchlist after adding
+    }
+  };
+
   return (
-    <Link href={`/movies/${movie.id}`}>
-      <div className="p-4 border rounded hover:shadow-lg">
-        <img src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`} alt={movie.title} />
-        <h3 className="mt-2 text-lg font-semibold">{movie.title}</h3>
-      </div>
-    </Link>
+    <div className="movie-card">
+      <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={movie.title} />
+      <h2>{movie.title}</h2>
+      <button onClick={handleWatchlistToggle}>
+      Add to Watchlist
+      </button>
+    </div>
   );
-}
+};
+
+export default MovieCard;
