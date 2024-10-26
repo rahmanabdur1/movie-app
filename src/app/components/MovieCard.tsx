@@ -3,7 +3,8 @@
 import React from 'react';
 import { useWatchlist } from '../context/WatchlistContext';
 import { Movie } from '@/types';
-import { useRouter } from 'next/navigation'; // Import the router hook
+import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Import Link component
 
 type MovieCardProps = {
   movie: Movie;
@@ -25,10 +26,13 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
 
   return (
     <div className="movie-card">
-      <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={movie.title} />
-      <h2>{movie.title}</h2>
+      {/* Link to the movie details page */}
+      <Link href={`/movie/${movie.id}`}>
+        <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={movie.title} />
+        <h2>{movie.title}</h2>
+      </Link>
       <button onClick={handleWatchlistToggle}>
-      Add to Watchlist
+        {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
       </button>
     </div>
   );
