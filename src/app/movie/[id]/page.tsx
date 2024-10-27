@@ -7,7 +7,6 @@ import React from "react";
 import { z } from "zod";
 import { Movie, Recommendations as RecommendationsType, Credits } from "@/types";
 import { useWatchlist } from "@/app/context/WatchlistContext";
-import { useRouter } from "next/router"; // Import useRouter
 
 const fetchMovieDetails = async (id: string): Promise<Movie> => {
   const res = await fetch(
@@ -33,11 +32,8 @@ const fetchRecommendations = async (id: string): Promise<RecommendationsType> =>
   return RecommendationsSchema.parse(data);
 };
 
-export default function MovieDetails() {
-  const { query } = useRouter(); // Get the router object
-  const id = query.id as string; // Extract the id from query
+export default function MovieDetails({ params }: { params: { id: string } }) {
   const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
-  
   const [error, setError] = React.useState<string | null>(null);
   const [movie, setMovie] = React.useState<Movie | null>(null);
   const [credits, setCredits] = React.useState<Credits | null>(null);
@@ -48,7 +44,7 @@ export default function MovieDetails() {
   React.useEffect(() => {
     const fetchDetails = async () => {
       try {
-        if (!id) return; // Ensure id is valid
+        const { id } = params; // Get id from params
 
         const movieData = await fetchMovieDetails(id);
         setMovie(movieData);
@@ -71,7 +67,7 @@ export default function MovieDetails() {
     };
 
     fetchDetails();
-  }, [id, watchlist]); // Depend on id
+  }, [params, watchlist]);
 
   const handleWatchlistToggle = () => {
     if (isInWatchlist) {
