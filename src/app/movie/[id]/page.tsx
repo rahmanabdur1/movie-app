@@ -1,11 +1,11 @@
 "use client";
 
 import Recommendations from "@/app/components/Recommendations";
-import { CreditsSchema, MovieSchema, RecommendationsSchema } from "@/app/schemas";
+import { CreditsSchema, MovieSchema, RecommendationsSchema  } from "@/app/schemas";
 import Image from "next/image";
 import React from "react";
 import { z } from "zod";
-import { Movie, Recommendations as RecommendationsType } from "@/types";
+import { Movie, Recommendations as RecommendationsType ,Credits} from "@/types";
 import { useWatchlist } from "@/app/context/WatchlistContext";
 
 const fetchMovieDetails = async (id: string): Promise<Movie> => {
@@ -36,7 +36,7 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
   const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
   const [error, setError] = React.useState<string | null>(null);
   const [movie, setMovie] = React.useState<Movie | null>(null);
-  const [credits, setCredits] = React.useState<any>(null);
+  const [credits, setCredits] = React.useState<null | Credits>(null);
   const [recommendations, setRecommendations] = React.useState<RecommendationsType | null>(null);
   const [loadingRecommendations, setLoadingRecommendations] = React.useState(true);
   const [isInWatchlist, setIsInWatchlist] = React.useState(false);
