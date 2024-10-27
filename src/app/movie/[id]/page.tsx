@@ -1,26 +1,33 @@
 "use client";
-import Recommendations from '@/app/components/Recommendations';
-import { CreditsSchema, MovieSchema, RecommendationsSchema } from '@/app/schemas';
-import Image from 'next/image';
-import React from 'react';
-import { z } from 'zod';
-import { Movie, Recommendations as RecommendationsType, Credits } from '@/types';
-import { useWatchlist } from '@/app/context/WatchlistContext';
+
+import Recommendations from "@/app/components/Recommendations";
+import { CreditsSchema, MovieSchema, RecommendationsSchema } from "@/app/schemas";
+import Image from "next/image";
+import React from "react";
+import { z } from "zod";
+import { Movie, Recommendations as RecommendationsType } from "@/types";
+import { useWatchlist } from "@/app/context/WatchlistContext";
 
 const fetchMovieDetails = async (id: string): Promise<Movie> => {
-  const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
+  const res = await fetch(
+    `https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
+  );
   const data = await res.json();
   return MovieSchema.parse(data);
 };
 
-const fetchCredits = async (id: string): Promise<Credits> => {
-  const res = await fetch(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
+const fetchCredits = async (id: string) => {
+  const res = await fetch(
+    `https://api.themoviedb.org/3/movie/${id}/credits?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
+  );
   const data = await res.json();
   return CreditsSchema.parse(data);
 };
 
 const fetchRecommendations = async (id: string): Promise<RecommendationsType> => {
-  const res = await fetch(`https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
+  const res = await fetch(
+    `https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
+  );
   const data = await res.json();
   return RecommendationsSchema.parse(data);
 };
@@ -29,77 +36,46 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
   const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
   const [error, setError] = React.useState<string | null>(null);
   const [movie, setMovie] = React.useState<Movie | null>(null);
-  const [credits, setCredits] = React.useState<Credits | null>(null);
+  const [credits, setCredits] = React.useState<any>(null);
   const [recommendations, setRecommendations] = React.useState<RecommendationsType | null>(null);
   const [loadingRecommendations, setLoadingRecommendations] = React.useState(true);
   const [isInWatchlist, setIsInWatchlist] = React.useState(false);
 
-  // React.useEffect(() => {
-  //   const fetchDetails = async () => {
-  //     try {
-  //       const { id } = params;
-
-  //       const movieData = await fetchMovieDetails(id);
-  //       setMovie(movieData);
-
-  //       const creditsData = await fetchCredits(id);
-  //       setCredits(creditsData);
-
-  //       const recommendationsData = await fetchRecommendations(id);
-  //       setRecommendations(recommendationsData);
-  //       setLoadingRecommendations(false);
-
-  //       setIsInWatchlist(watchlist.some((item) => item.id === movieData.id));
-  //     } catch (err) {
-  //       if (err instanceof z.ZodError) {
-  //         setError('Failed to validate movie data. Please try again later.');
-  //       } else {
-  //         setError('An error occurred while fetching movie data. Please try again later.');
-  //       }
-  //     }
-  //   };
-
-  //   fetchDetails();
-  // }, [params, watchlist]);
-
   React.useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const { id } = await params;
-  
+        const { id } = params;
+
         const movieData = await fetchMovieDetails(id);
         setMovie(movieData);
-  
+
         const creditsData = await fetchCredits(id);
         setCredits(creditsData);
-  
+
         const recommendationsData = await fetchRecommendations(id);
         setRecommendations(recommendationsData);
         setLoadingRecommendations(false);
-  
+
         setIsInWatchlist(watchlist.some((item) => item.id === movieData.id));
       } catch (err) {
         if (err instanceof z.ZodError) {
-          setError('Failed to validate movie data. Please try again later.');
+          setError("Failed to validate movie data. Please try again later.");
         } else {
-          setError('An error occurred while fetching movie data. Please try again later.');
+          setError("An error occurred while fetching movie data. Please try again later.");
         }
       }
     };
-  
-    // **This is the important part**: Make sure to call `fetchDetails`
-    fetchDetails(); // <-- Ensure that `fetchDetails()` is called, not just referenced.
+
+    fetchDetails();
   }, [params, watchlist]);
-  
+
   const handleWatchlistToggle = () => {
     if (isInWatchlist) {
-      movie?.id && removeFromWatchlist(movie.id); // Avoid using non-null assertion
+      if (movie?.id) removeFromWatchlist(movie.id); // Ensure movie ID is valid before removing
       setIsInWatchlist(false);
-    } else {
-      if (movie) {
-        addToWatchlist(movie);
-        setIsInWatchlist(true);
-      }
+    } else if (movie) {
+      addToWatchlist(movie);
+      setIsInWatchlist(true);
     }
   };
 
@@ -128,7 +104,7 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
           <p className="mt-2">
             <strong>Release Date:</strong> {movie.release_date}
           </p>
-          <p><strong>Genres:</strong> {movie.genres.map((genre) => genre.name).join(', ')}</p>
+          <p><strong>Genres:</strong> {movie.genres.map((genre: { name: string }) => genre.name).join(', ')}</p>
           <button
             onClick={handleWatchlistToggle}
             className={`mt-2 px-4 py-2 rounded transition duration-300 
@@ -142,7 +118,7 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
 
       <h2 className="mt-4 mb-2 text-2xl">Cast</h2>
       <ul className='mb-4'>
-        {credits.cast.slice(0, 5).map((actor, index) => (
+        {credits.cast.slice(0, 5).map((actor: { id: number; name: string }, index: number) => (
           <li key={actor.id || index}>{actor.name}</li>
         ))}
       </ul>
