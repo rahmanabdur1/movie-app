@@ -34,21 +34,49 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
   const [loadingRecommendations, setLoadingRecommendations] = React.useState(true);
   const [isInWatchlist, setIsInWatchlist] = React.useState(false);
 
+  // React.useEffect(() => {
+  //   const fetchDetails = async () => {
+  //     try {
+  //       const { id } = params;
+
+  //       const movieData = await fetchMovieDetails(id);
+  //       setMovie(movieData);
+
+  //       const creditsData = await fetchCredits(id);
+  //       setCredits(creditsData);
+
+  //       const recommendationsData = await fetchRecommendations(id);
+  //       setRecommendations(recommendationsData);
+  //       setLoadingRecommendations(false);
+
+  //       setIsInWatchlist(watchlist.some((item) => item.id === movieData.id));
+  //     } catch (err) {
+  //       if (err instanceof z.ZodError) {
+  //         setError('Failed to validate movie data. Please try again later.');
+  //       } else {
+  //         setError('An error occurred while fetching movie data. Please try again later.');
+  //       }
+  //     }
+  //   };
+
+  //   fetchDetails();
+  // }, [params, watchlist]);
+
   React.useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const { id } = params;
-
+        const { id } = await params;
+  
         const movieData = await fetchMovieDetails(id);
         setMovie(movieData);
-
+  
         const creditsData = await fetchCredits(id);
         setCredits(creditsData);
-
+  
         const recommendationsData = await fetchRecommendations(id);
         setRecommendations(recommendationsData);
         setLoadingRecommendations(false);
-
+  
         setIsInWatchlist(watchlist.some((item) => item.id === movieData.id));
       } catch (err) {
         if (err instanceof z.ZodError) {
@@ -58,10 +86,11 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
         }
       }
     };
-
-    fetchDetails();
+  
+    // **This is the important part**: Make sure to call `fetchDetails`
+    fetchDetails(); // <-- Ensure that `fetchDetails()` is called, not just referenced.
   }, [params, watchlist]);
-
+  
   const handleWatchlistToggle = () => {
     if (isInWatchlist) {
       movie?.id && removeFromWatchlist(movie.id); // Avoid using non-null assertion
