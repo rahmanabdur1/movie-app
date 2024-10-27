@@ -32,8 +32,8 @@ const fetchRecommendations = async (id: string): Promise<RecommendationsType> =>
   return RecommendationsSchema.parse(data);
 };
 
-// Use the Next.js PageProps type for better type safety
 export default function MovieDetails({ params }: { params: { id: string } }) {
+
   const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
   const [error, setError] = React.useState<string | null>(null);
   const [movie, setMovie] = React.useState<Movie | null>(null);
