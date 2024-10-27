@@ -3,7 +3,7 @@
 import Recommendations from "@/app/components/Recommendations";
 import { CreditsSchema, MovieSchema, RecommendationsSchema } from "@/app/schemas";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { z } from "zod";
 import { Movie, Recommendations as RecommendationsType, Credits } from "@/types";
 import { useWatchlist } from "@/app/context/WatchlistContext";
@@ -32,23 +32,19 @@ const fetchRecommendations = async (id: string): Promise<RecommendationsType> =>
   return RecommendationsSchema.parse(data);
 };
 
-// Convert to async function to await params if it's a Promise
-export default async function MovieDetails({ params }: { params: { id: string } | Promise<{ id: string }> }) {
+export default function MovieDetails({ params }: { params: { id: string } }) {
   const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
-  const [error, setError] = React.useState<string | null>(null);
-  const [movie, setMovie] = React.useState<Movie | null>(null);
-  const [credits, setCredits] = React.useState<Credits | null>(null);
-  const [recommendations, setRecommendations] = React.useState<RecommendationsType | null>(null);
-  const [loadingRecommendations, setLoadingRecommendations] = React.useState(true);
-  const [isInWatchlist, setIsInWatchlist] = React.useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const [credits, setCredits] = useState<Credits | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationsType | null>(null);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(true);
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
 
-  // Ensure params is resolved if it's a promise
-  const resolvedParams = await params;
-  
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const { id } = resolvedParams;
+        const { id } = params;
 
         const movieData = await fetchMovieDetails(id);
         setMovie(movieData);
@@ -71,7 +67,7 @@ export default async function MovieDetails({ params }: { params: { id: string } 
     };
 
     fetchDetails();
-  }, [resolvedParams, watchlist]);
+  }, [params, watchlist]);
 
   const handleWatchlistToggle = () => {
     if (isInWatchlist) {
