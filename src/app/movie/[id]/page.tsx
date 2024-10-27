@@ -16,7 +16,7 @@ const fetchMovieDetails = async (id: string): Promise<Movie> => {
   return MovieSchema.parse(data);
 };
 
-const fetchCredits = async (id: string) => {
+const fetchCredits = async (id: string): Promise<Credits> => {
   const res = await fetch(
     `https://api.themoviedb.org/3/movie/${id}/credits?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
   );
@@ -29,21 +29,10 @@ const fetchRecommendations = async (id: string): Promise<RecommendationsType> =>
     `https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
   );
   const data = await res.json();
-
-  // Map the results to include only the required properties.
-  const mappedResults = data.results.map((item: any) => ({
-    id: item.id,
-    title: item.title,
-    poster_path: item.poster_path,
-    overview: "",  // You might want to provide default values or empty strings
-    release_date: "",
-    genres: [],
-  }));
-
-  // Ensure that the mapped data conforms to RecommendationsSchema
-  return RecommendationsSchema.parse({ results: mappedResults });
+  return RecommendationsSchema.parse(data);
 };
 
+// Use the Next.js PageProps type for better type safety
 export default function MovieDetails({ params }: { params: { id: string } }) {
   const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
   const [error, setError] = React.useState<string | null>(null);
@@ -56,7 +45,7 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
   React.useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const { id } = params; // Get id from params
+        const { id } = params;
 
         const movieData = await fetchMovieDetails(id);
         setMovie(movieData);
@@ -83,7 +72,7 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
 
   const handleWatchlistToggle = () => {
     if (isInWatchlist) {
-      if (movie?.id) removeFromWatchlist(movie.id); // Ensure movie ID is valid before removing
+      if (movie?.id) removeFromWatchlist(movie.id);
       setIsInWatchlist(false);
     } else if (movie) {
       addToWatchlist(movie);
@@ -92,16 +81,11 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
   };
 
   if (error) return <div className="p-4 text-red-500">{error}</div>;
-  if (!movie || !credits) {
-    return (
-      <p className="mt-2 text-center text-[13px] font-medium text-white text-shadow-custom"
-         style={{ fontFamily: 'var(--font-geist-mono), monospace, sans-serif' }}>
-        Loading...
-      </p>
-    );
-  }
+  if (!movie || !credits) return (
+    <p className="mt-2 text-center text-[13px] font-medium text-white text-shadow-custom"
+      style={{ fontFamily: 'var(--font-geist-mono), monospace, sans-serif' }}>Loading...</p>
+  );
 
-  // Provide a fallback for recommendations
   const recommendationsToPass = recommendations || { results: [] };
 
   return (
