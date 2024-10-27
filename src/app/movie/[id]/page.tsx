@@ -32,8 +32,8 @@ const fetchRecommendations = async (id: string): Promise<RecommendationsType> =>
   return RecommendationsSchema.parse(data);
 };
 
-export default function MovieDetails({ params }: { params: { id: string } }) {
-
+// Convert to async function to await params if it's a Promise
+export default async function MovieDetails({ params }: { params: { id: string } | Promise<{ id: string }> }) {
   const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
   const [error, setError] = React.useState<string | null>(null);
   const [movie, setMovie] = React.useState<Movie | null>(null);
@@ -42,10 +42,13 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
   const [loadingRecommendations, setLoadingRecommendations] = React.useState(true);
   const [isInWatchlist, setIsInWatchlist] = React.useState(false);
 
+  // Ensure params is resolved if it's a promise
+  const resolvedParams = await params;
+  
   React.useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const { id } = params;
+        const { id } = resolvedParams;
 
         const movieData = await fetchMovieDetails(id);
         setMovie(movieData);
@@ -68,7 +71,7 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
     };
 
     fetchDetails();
-  }, [params, watchlist]);
+  }, [resolvedParams, watchlist]);
 
   const handleWatchlistToggle = () => {
     if (isInWatchlist) {
