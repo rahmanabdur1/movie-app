@@ -1,12 +1,13 @@
 "use client";
 
 import Recommendations from "@/app/components/Recommendations";
-import { CreditsSchema, MovieSchema, RecommendationsSchema  } from "@/app/schemas";
+import { CreditsSchema, MovieSchema, RecommendationsSchema } from "@/app/schemas";
 import Image from "next/image";
 import React from "react";
 import { z } from "zod";
-import { Movie, Recommendations as RecommendationsType ,Credits} from "@/types";
+import { Movie, Recommendations as RecommendationsType, Credits } from "@/types";
 import { useWatchlist } from "@/app/context/WatchlistContext";
+import { useRouter } from "next/router"; // Import useRouter
 
 const fetchMovieDetails = async (id: string): Promise<Movie> => {
   const res = await fetch(
@@ -32,11 +33,14 @@ const fetchRecommendations = async (id: string): Promise<RecommendationsType> =>
   return RecommendationsSchema.parse(data);
 };
 
-export default function MovieDetails({ params }: { params: { id: string } }) {
+export default function MovieDetails() {
+  const { query } = useRouter(); // Get the router object
+  const id = query.id as string; // Extract the id from query
   const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
+  
   const [error, setError] = React.useState<string | null>(null);
   const [movie, setMovie] = React.useState<Movie | null>(null);
-  const [credits, setCredits] = React.useState<null | Credits>(null);
+  const [credits, setCredits] = React.useState<Credits | null>(null);
   const [recommendations, setRecommendations] = React.useState<RecommendationsType | null>(null);
   const [loadingRecommendations, setLoadingRecommendations] = React.useState(true);
   const [isInWatchlist, setIsInWatchlist] = React.useState(false);
@@ -44,7 +48,7 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
   React.useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const { id } = params;
+        if (!id) return; // Ensure id is valid
 
         const movieData = await fetchMovieDetails(id);
         setMovie(movieData);
@@ -67,7 +71,7 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
     };
 
     fetchDetails();
-  }, [params, watchlist]);
+  }, [id, watchlist]); // Depend on id
 
   const handleWatchlistToggle = () => {
     if (isInWatchlist) {
@@ -80,10 +84,14 @@ export default function MovieDetails({ params }: { params: { id: string } }) {
   };
 
   if (error) return <div className="p-4 text-red-500">{error}</div>;
-  if (!movie || !credits) return (
-    <p className="mt-2 text-center text-[13px] font-medium text-white text-shadow-custom"
-      style={{ fontFamily: 'var(--font-geist-mono), monospace, sans-serif' }}>Loading...</p>
-  );
+  if (!movie || !credits) {
+    return (
+      <p className="mt-2 text-center text-[13px] font-medium text-white text-shadow-custom"
+         style={{ fontFamily: 'var(--font-geist-mono), monospace, sans-serif' }}>
+        Loading...
+      </p>
+    );
+  }
 
   // Provide a fallback for recommendations
   const recommendationsToPass = recommendations || { results: [] };
