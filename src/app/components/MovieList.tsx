@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,11 +22,7 @@ export default function MovieList() {
     resolver: zodResolver(searchSchema),
   });
 
-  useEffect(() => {
-    fetchMovies();
-  }, [page, searchQuery]);
-
-  const fetchMovies = async () => {
+  const fetchMovies = useCallback(async () => {
     setIsLoading(true);
     const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
     const url = searchQuery
@@ -37,13 +33,17 @@ export default function MovieList() {
     const data = await res.json();
     setMovies((prevMovies) => [...prevMovies, ...data.results]);
     setIsLoading(false);
-  };
+  }, [page, searchQuery]);
+
+  useEffect(() => {
+    fetchMovies();
+  }, [page, searchQuery, fetchMovies]);
 
   const handleSearch = (data: SearchForm) => {
     setSearchQuery(data.query);
     reset();
-    setMovies([]);
-    setPage(1);
+    setMovies([]); // Clear previous movies
+    setPage(1); // Reset to the first page
   };
 
   const handleLoadMore = () => {
@@ -62,7 +62,6 @@ export default function MovieList() {
           className="border border-blue-500 outline-none rounded-xl p-2 mr-2 focus:border-blue-700 transition duration-200"
           defaultValue={searchQuery}
         />
-
         {errors.query && <p className="text-red-500">{errors.query.message}</p>}
         <button type="submit" className="bg-black text-white rounded-lg px-4 py-2 hover:bg-blue-600 transition duration-300">
           Search
@@ -79,7 +78,7 @@ export default function MovieList() {
 
       <button
         onClick={handleLoadMore}
-        className="mt-4 bg-green-600  text-white rounded px-4 py-2 hover:bg-green-700 transition duration-300"
+        className="mt-4 bg-green-600 text-white rounded px-4 py-2 hover:bg-green-700 transition duration-300"
         disabled={isLoading}
       >
         Load More

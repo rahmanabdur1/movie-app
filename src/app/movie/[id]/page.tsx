@@ -1,10 +1,10 @@
-"use client"
+"use client";
 import Recommendations from '@/app/components/Recommendations';
 import { CreditsSchema, MovieSchema, RecommendationsSchema } from '@/app/schemas';
 import Image from 'next/image';
 import React from 'react';
 import { z } from 'zod';
-import { Movie, Recommendations as RecommendationsType } from '@/types';
+import { Movie, Recommendations as RecommendationsType, Credits } from '@/types';
 import { useWatchlist } from '@/app/context/WatchlistContext';
 
 const fetchMovieDetails = async (id: string): Promise<Movie> => {
@@ -13,7 +13,7 @@ const fetchMovieDetails = async (id: string): Promise<Movie> => {
   return MovieSchema.parse(data);
 };
 
-const fetchCredits = async (id: string) => {
+const fetchCredits = async (id: string): Promise<Credits> => {
   const res = await fetch(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
   const data = await res.json();
   return CreditsSchema.parse(data);
@@ -25,11 +25,11 @@ const fetchRecommendations = async (id: string): Promise<RecommendationsType> =>
   return RecommendationsSchema.parse(data);
 };
 
-export default function MovieDetails({ params }: { params: Promise<{ id: string }> }) {
+export default function MovieDetails({ params }: { params: { id: string } }) {
   const { watchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
   const [error, setError] = React.useState<string | null>(null);
   const [movie, setMovie] = React.useState<Movie | null>(null);
-  const [credits, setCredits] = React.useState<any>(null);
+  const [credits, setCredits] = React.useState<Credits | null>(null);
   const [recommendations, setRecommendations] = React.useState<RecommendationsType | null>(null);
   const [loadingRecommendations, setLoadingRecommendations] = React.useState(true);
   const [isInWatchlist, setIsInWatchlist] = React.useState(false);
@@ -37,7 +37,7 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
   React.useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const { id } = await params;
+        const { id } = params;
 
         const movieData = await fetchMovieDetails(id);
         setMovie(movieData);
@@ -64,7 +64,7 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
 
   const handleWatchlistToggle = () => {
     if (isInWatchlist) {
-      removeFromWatchlist(movie?.id!);
+      movie?.id && removeFromWatchlist(movie.id); // Avoid using non-null assertion
       setIsInWatchlist(false);
     } else {
       if (movie) {
@@ -99,7 +99,7 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
           <p className="mt-2">
             <strong>Release Date:</strong> {movie.release_date}
           </p>
-          <p><strong>Genres:</strong> {movie.genres.map((genre: { name: string }) => genre.name).join(', ')}</p>
+          <p><strong>Genres:</strong> {movie.genres.map((genre) => genre.name).join(', ')}</p>
           <button
             onClick={handleWatchlistToggle}
             className={`mt-2 px-4 py-2 rounded transition duration-300 
@@ -113,10 +113,9 @@ export default function MovieDetails({ params }: { params: Promise<{ id: string 
 
       <h2 className="mt-4 mb-2 text-2xl">Cast</h2>
       <ul className='mb-4'>
-      {credits.cast.slice(0, 5).map((actor: any, index: number) => (
-  <li key={actor.id || index}>{actor.name}</li>
-))}
-
+        {credits.cast.slice(0, 5).map((actor, index) => (
+          <li key={actor.id || index}>{actor.name}</li>
+        ))}
       </ul>
 
       <h2 className="mt-4 text-2xl">Recommendations</h2>
