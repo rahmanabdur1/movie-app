@@ -29,7 +29,19 @@ const fetchRecommendations = async (id: string): Promise<RecommendationsType> =>
     `https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
   );
   const data = await res.json();
-  return RecommendationsSchema.parse(data);
+
+  // Map the results to include only the required properties.
+  const mappedResults = data.results.map((item: any) => ({
+    id: item.id,
+    title: item.title,
+    poster_path: item.poster_path,
+    overview: "",  // You might want to provide default values or empty strings
+    release_date: "",
+    genres: [],
+  }));
+
+  // Ensure that the mapped data conforms to RecommendationsSchema
+  return RecommendationsSchema.parse({ results: mappedResults });
 };
 
 export default function MovieDetails({ params }: { params: { id: string } }) {
